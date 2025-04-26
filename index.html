@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Happy Birthday SRAAi - Snake Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      background-color: black;
+      display: block;
+      margin: 0 auto;
+      border: 10px solid white;
+    }
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+    }
+    .btn {
+      background: white;
+      color: black;
+      font-size: 20px;
+      padding: 15px;
+      margin: 5px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+    #loveBar {
+      width: 80%;
+      height: 20px;
+      background: white;
+      margin: 10px auto;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #loveProgress {
+      height: 100%;
+      width: 0%;
+      background: pink;
+    }
+    #message {
+      text-align: center;
+      font-size: 24px;
+      margin-top: 10px;
+    }
+    #backgroundText {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      text-align: center;
+      font-size: 50px;
+      color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-50%);
+      user-select: none;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="backgroundText">happy birthday SRAAi</div>
+<canvas id="gameCanvas" width="800" height="800"></canvas>
+
+<div id="loveBar">
+  <div id="loveProgress"></div>
+</div>
+
+<div id="message"></div>
+
+<div id="controls">
+  <button class="btn" onclick="changeDirection('LEFT')">⬅️</button>
+  <button class="btn" onclick="changeDirection('UP')">⬆️</button>
+  <button class="btn" onclick="changeDirection('DOWN')">⬇️</button>
+  <button class="btn" onclick="changeDirection('RIGHT')">➡️</button>
+  <button class="btn" onclick="speedUp()">⚡ Speed</button>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const box = 20;
+let snake = [];
+snake[0] = { x: 10 * box, y: 10 * box };
+
+let food = generateFood();
+let heart = generateFood();
+let direction;
+let score = 0;
+let speed = 200;
+let loveProgress = 0;
+let motivationalMessages = [
+  "Great Job!",
+  "You're Amazing!",
+  "Keep Going!",
+  "You Rock!",
+  "So Proud of You!",
+  "You're Unstoppable!"
+];
+
+let catHead = new Image();
+catHead.src = 'https://i.imgur.com/zf6ixuP.png'; // صورة رأس قطة جميلة جاهزة
+
+function generateFood() {
+  return {
+    x: Math.floor(Math.random() * (canvas.width/box)) * box,
+    y: Math.floor(Math.random() * (canvas.height/box)) * box
+  };
+}
+
+document.addEventListener('keydown', directionHandler);
+
+function directionHandler(event) {
+  if (event.keyCode == 37 && direction != 'RIGHT') direction = 'LEFT';
+  if (event.keyCode == 38 && direction != 'DOWN') direction = 'UP';
+  if (event.keyCode == 39 && direction != 'LEFT') direction = 'RIGHT';
+  if (event.keyCode == 40 && direction != 'UP') direction = 'DOWN';
+}
+
+function changeDirection(dir) {
+  if (dir == 'LEFT' && direction != 'RIGHT') direction = 'LEFT';
+  if (dir == 'UP' && direction != 'DOWN') direction = 'UP';
+  if (dir == 'RIGHT' && direction != 'LEFT') direction = 'RIGHT';
+  if (dir == 'DOWN' && direction != 'UP') direction = 'DOWN';
+}
+
+function speedUp() {
+  speed = 100;
+}
+
+function collision(head, array) {
+  for (let i = 0; i < array.length; i++) {
+    if (head.x == array[i].x && head.y == array[i].y) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < snake.length; i++) {
+    ctx.fillStyle = (i == 0) ? 'yellow' : 'yellow';
+    ctx.fillRect(snake[i].x, snake[i].y, box, box);
+  }
+
+  ctx.drawImage(catHead, snake[0].x, snake[0].y, box, box);
+
+  // رسم الطعام العادي
+  ctx.fillStyle = 'yellow';
+  ctx.fillRect(food.x, food.y, box, box);
+
+  // رسم القلب
+  ctx.fillStyle = 'red';
+  ctx.beginPath();
+  ctx.moveTo(heart.x + box/2, heart.y + box/5);
+  ctx.bezierCurveTo(heart.x + box, heart.y - box/5, heart.x + box, heart.y + box, heart.x + box/2, heart.y + box);
+  ctx.bezierCurveTo(heart.x, heart.y + box, heart.x, heart.y - box/5, heart.x + box/2, heart.y + box/5);
+  ctx.fill();
+
+  let snakeX = snake[0].x;
+  let snakeY = snake[0].y;
+
+  if (direction == 'LEFT') snakeX -= box;
+  if (direction == 'UP') snakeY -= box;
+  if (direction == 'RIGHT') snakeX += box;
+  if (direction == 'DOWN') snakeY += box;
+
+  if (snakeX == food.x && snakeY == food.y) {
+    score++;
+    loveProgress += 2;
+    food = generateFood();
+    document.getElementById('message').innerText = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+  } else if (snakeX == heart.x && snakeY == heart.y) {
+    score += 5;
+    loveProgress += 10;
+    heart = generateFood();
+    document.getElementById('message').innerText = "Big Love!";
+  } else {
+    snake.pop();
+  }
+
+  let newHead = { x: snakeX, y: snakeY };
+
+  if (snakeX < 0 || snakeY < 0 || snakeX >= canvas.width || snakeY >= canvas.height || collision(newHead, snake)) {
+    clearInterval(game);
+    document.getElementById('message').innerText = "I love you ♥️♥️♥️";
+  }
+
+  snake.unshift(newHead);
+
+  document.getElementById('loveProgress').style.width = loveProgress + '%';
+
+  if (loveProgress >= 100) {
+    document.getElementById('loveProgress').style.background = 'red';
+    document.getElementById('message').innerText = "Explosion of Love!";
+  }
+}
+
+let game = setInterval(draw, speed);
+
+</script>
+
+</body>
+</html>
