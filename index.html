@@ -10,46 +10,13 @@
       background-color: black;
       color: white;
       font-family: Arial, sans-serif;
+      position: relative;
     }
     canvas {
       background-color: black;
       display: block;
       margin: 0 auto;
       border: 10px solid white;
-    }
-    #controls {
-      position: absolute;
-      bottom: 20px;
-      width: 100%;
-      text-align: center;
-    }
-    .btn {
-      background: white;
-      color: black;
-      font-size: 20px;
-      padding: 15px;
-      margin: 5px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-    }
-    #loveBar {
-      width: 80%;
-      height: 20px;
-      background: white;
-      margin: 10px auto;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    #loveProgress {
-      height: 100%;
-      width: 0%;
-      background: pink;
-    }
-    #message {
-      text-align: center;
-      font-size: 24px;
-      margin-top: 10px;
     }
     #backgroundText {
       position: absolute;
@@ -62,6 +29,63 @@
       user-select: none;
       pointer-events: none;
     }
+    #loveBarContainer {
+      width: 80%;
+      height: 25px;
+      background: white;
+      margin: 10px auto;
+      border-radius: 12px;
+      overflow: hidden;
+      text-align: center;
+      font-size: 18px;
+      position: relative;
+    }
+    #loveProgress {
+      height: 100%;
+      width: 0%;
+      background: pink;
+      text-align: center;
+      color: black;
+      line-height: 25px;
+      font-weight: bold;
+    }
+    #message {
+      text-align: center;
+      font-size: 24px;
+      margin: 10px;
+    }
+    #controls {
+      position: absolute;
+      bottom: 30px;
+      width: 100%;
+      text-align: center;
+    }
+    .control-grid {
+      display: inline-grid;
+      grid-template-columns: 60px 60px 60px;
+      grid-template-rows: 60px 60px 60px;
+      gap: 10px;
+      align-items: center;
+      justify-items: center;
+    }
+    .btn {
+      width: 60px;
+      height: 60px;
+      background: white;
+      color: black;
+      font-size: 30px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:active {
+      background: pink;
+    }
+    #speedBtn {
+      margin-top: 10px;
+      background: red;
+      font-size: 20px;
+    }
   </style>
 </head>
 <body>
@@ -69,18 +93,25 @@
 <div id="backgroundText">happy birthday SRAAi</div>
 <canvas id="gameCanvas" width="800" height="800"></canvas>
 
-<div id="loveBar">
-  <div id="loveProgress"></div>
+<div id="loveBarContainer">
+  <div id="loveProgress">Love Meter</div>
 </div>
 
 <div id="message"></div>
 
 <div id="controls">
-  <button class="btn" onclick="changeDirection('LEFT')">⬅️</button>
-  <button class="btn" onclick="changeDirection('UP')">⬆️</button>
-  <button class="btn" onclick="changeDirection('DOWN')">⬇️</button>
-  <button class="btn" onclick="changeDirection('RIGHT')">➡️</button>
-  <button class="btn" onclick="speedUp()">⚡ Speed</button>
+  <div class="control-grid">
+    <div></div>
+    <button class="btn" onclick="changeDirection('UP')">⬆️</button>
+    <div></div>
+    <button class="btn" onclick="changeDirection('LEFT')">⬅️</button>
+    <div></div>
+    <button class="btn" onclick="changeDirection('RIGHT')">➡️</button>
+    <div></div>
+    <button class="btn" onclick="changeDirection('DOWN')">⬇️</button>
+    <div></div>
+  </div>
+  <button id="speedBtn" class="btn" onclick="speedUp()">⚡ SPEED</button>
 </div>
 
 <script>
@@ -105,9 +136,6 @@ let motivationalMessages = [
   "So Proud of You!",
   "You're Unstoppable!"
 ];
-
-let catHead = new Image();
-catHead.src = 'https://i.imgur.com/zf6ixuP.png'; // صورة رأس قطة جميلة جاهزة
 
 function generateFood() {
   return {
@@ -134,6 +162,8 @@ function changeDirection(dir) {
 
 function speedUp() {
   speed = 100;
+  clearInterval(game);
+  game = setInterval(draw, speed);
 }
 
 function collision(head, array) {
@@ -145,6 +175,11 @@ function collision(head, array) {
   return false;
 }
 
+function drawCatHead(x, y) {
+  ctx.font = "20px Arial";
+  ctx.fillText("🐱", x + 2, y + 18);
+}
+
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -153,13 +188,13 @@ function draw() {
     ctx.fillRect(snake[i].x, snake[i].y, box, box);
   }
 
-  ctx.drawImage(catHead, snake[0].x, snake[0].y, box, box);
+  drawCatHead(snake[0].x, snake[0].y);
 
-  // رسم الطعام العادي
+  // draw normal food
   ctx.fillStyle = 'yellow';
   ctx.fillRect(food.x, food.y, box, box);
 
-  // رسم القلب
+  // draw heart food
   ctx.fillStyle = 'red';
   ctx.beginPath();
   ctx.moveTo(heart.x + box/2, heart.y + box/5);
@@ -198,9 +233,12 @@ function draw() {
 
   snake.unshift(newHead);
 
-  document.getElementById('loveProgress').style.width = loveProgress + '%';
+  let lovePercent = (score / 50) * 100;
+  if (lovePercent > 100) lovePercent = 100;
+  document.getElementById('loveProgress').style.width = lovePercent + '%';
+  document.getElementById('loveProgress').innerText = Math.floor(score) + " / 50";
 
-  if (loveProgress >= 100) {
+  if (score >= 50) {
     document.getElementById('loveProgress').style.background = 'red';
     document.getElementById('message').innerText = "Explosion of Love!";
   }
